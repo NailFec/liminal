@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+
+1. Always read the `AGENTS.md` file, and the `README.md` file.
+2. Use MCP, Skills, Subagents if you need it.
+3. The dev environment is: CachyOS (Based on Arch Linux), niri window manager (xwayland-satellite), fish / bash
