@@ -3,6 +3,7 @@
 	import { page } from "$app/state";
 	import { resolve } from "$app/paths";
 	import type { Snippet } from "svelte";
+	import WindowControls from "$lib/components/WindowControls.svelte";
 
 	type Props = {
 		children: Snippet;
@@ -15,7 +16,7 @@
 
 <div class="app">
 	<header class="topbar">
-		<div class="brand">liminal</div>
+		<div class="brand" data-tauri-drag-region>liminal</div>
 		<nav class="modes" aria-label="Mode">
 			<a href={resolve("/design")} class="mode" class:active={path.startsWith("/design")}
 				>Design</a
@@ -24,7 +25,8 @@
 				>System</a
 			>
 		</nav>
-		<div class="spacer"></div>
+		<div class="spacer" data-tauri-drag-region></div>
+		<WindowControls />
 	</header>
 	<main class="content">
 		{@render children()}
@@ -84,6 +86,7 @@
 
 	.spacer {
 		flex: 1;
+		align-self: stretch;
 	}
 
 	.content {
