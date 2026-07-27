@@ -3,10 +3,17 @@
 		value?: string;
 		placeholder?: string;
 		mono?: boolean;
+		disabled?: boolean;
 		onchange?: (value: string) => void;
 	};
 
-	let { value = "", placeholder = "", mono = false, onchange }: Props = $props();
+	let {
+		value = "",
+		placeholder = "",
+		mono = false,
+		disabled = false,
+		onchange,
+	}: Props = $props();
 </script>
 
 <input
@@ -15,6 +22,7 @@
 	type="text"
 	{value}
 	{placeholder}
+	{disabled}
 	spellcheck="false"
 	oninput={(e) => onchange?.(e.currentTarget.value)}
 />

@@ -4,10 +4,11 @@
 	type Props = {
 		value?: string;
 		options?: Option[];
+		disabled?: boolean;
 		onchange?: (value: string) => void;
 	};
 
-	let { value = "", options = [], onchange }: Props = $props();
+	let { value = "", options = [], disabled = false, onchange }: Props = $props();
 
 	let open = $state(false);
 	let triggerEl: HTMLButtonElement | undefined = $state();
@@ -29,6 +30,7 @@
 	}
 
 	function toggle() {
+		if (disabled) return;
 		open = !open;
 		if (open) placeMenu();
 	}
@@ -59,6 +61,7 @@
 	});
 
 	function onKeydown(event: KeyboardEvent) {
+		if (disabled) return;
 		if (!open) {
 			if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
 				event.preventDefault();
@@ -96,13 +99,14 @@
 	onresize={onWindowScroll}
 />
 
-<div class="select" data-select-id={rootId}>
+<div class="select" class:disabled data-select-id={rootId}>
 	<button
 		type="button"
 		class="trigger"
 		bind:this={triggerEl}
 		aria-haspopup="listbox"
-		aria-expanded={open}
+		aria-expanded={open && !disabled}
+		{disabled}
 		onclick={toggle}
 		onkeydown={onKeydown}
 	>
@@ -110,7 +114,7 @@
 		<span class="chevron">▾</span>
 	</button>
 
-	{#if open}
+	{#if open && !disabled}
 		<ul
 			class="menu"
 			role="listbox"

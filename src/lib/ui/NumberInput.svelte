@@ -2,12 +2,14 @@
 	type Props = {
 		value?: string;
 		min?: number;
+		disabled?: boolean;
 		onchange?: (value: string) => void;
 	};
 
-	let { value = "0", min = 0, onchange }: Props = $props();
+	let { value = "0", min = 0, disabled = false, onchange }: Props = $props();
 
 	function bump(delta: number) {
+		if (disabled) return;
 		const current = Number(value);
 		const next = Number.isFinite(current) ? current + delta : min;
 		const clamped = Math.max(min, next);
@@ -15,17 +17,18 @@
 	}
 </script>
 
-<div class="number">
+<div class="number" class:disabled>
 	<input
 		class="input"
 		type="text"
 		inputmode="numeric"
 		{value}
+		{disabled}
 		oninput={(e) => onchange?.(e.currentTarget.value)}
 	/>
 	<div class="steppers" aria-hidden="true">
-		<button type="button" class="step" tabindex="-1" onclick={() => bump(1)}>+</button>
-		<button type="button" class="step" tabindex="-1" onclick={() => bump(-1)}>−</button>
+		<button type="button" class="step" tabindex="-1" {disabled} onclick={() => bump(1)}>+</button>
+		<button type="button" class="step" tabindex="-1" {disabled} onclick={() => bump(-1)}>−</button>
 	</div>
 </div>
 
@@ -94,5 +97,9 @@
 	.step:active {
 		background: var(--bg-active);
 		color: #fff;
+	}
+
+	.number.disabled {
+		opacity: 0.7;
 	}
 </style>

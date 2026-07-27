@@ -3,16 +3,18 @@
 
 	type Props = {
 		value?: YesNo;
+		disabled?: boolean;
 		onchange?: (value: YesNo) => void;
 	};
 
-	let { value = "no", onchange }: Props = $props();
+	let { value = "no", disabled = false, onchange }: Props = $props();
 </script>
 
-<div class="toggle" role="group">
+<div class="toggle" class:disabled role="group" aria-disabled={disabled}>
 	<button
 		type="button"
 		class:active={value === "yes"}
+		{disabled}
 		onclick={() => onchange?.("yes")}
 	>
 		yes
@@ -20,6 +22,7 @@
 	<button
 		type="button"
 		class:active={value === "no"}
+		{disabled}
 		onclick={() => onchange?.("no")}
 	>
 		no
@@ -50,5 +53,9 @@
 	button.active {
 		background: var(--bg-active);
 		color: #fff;
+	}
+
+	.toggle.disabled button {
+		cursor: not-allowed;
 	}
 </style>

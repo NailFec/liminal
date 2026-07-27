@@ -1,17 +1,27 @@
 export type YesNo = "yes" | "no";
-
 export type WallpaperStyle = "tiled" | "centered" | "stretched";
-
 export type InterfaceRotation = "0" | "90" | "180" | "270";
 
 /** Design-relevant Limine global options (canonical British spellings). */
 export type DesignConfig = {
 	timeout: string;
 	quiet: YesNo;
+	serial: YesNo;
+	serial_baudrate: string;
+	global_dtb: string;
+	default_entry: string;
+	remember_last_entry: YesNo;
 	graphics: YesNo;
 	wallpaper: string[];
 	wallpaper_style: WallpaperStyle;
 	backdrop: string;
+	verbose: YesNo;
+	randomise_memory: YesNo;
+	hash_mismatch_panic: YesNo;
+	measured_boot: YesNo;
+	firmware_logo: YesNo;
+	keyboard_layout: string;
+	mouse: YesNo;
 	interface_resolution: string;
 	interface_rotation: InterfaceRotation;
 	interface_branding: string;
@@ -31,15 +41,30 @@ export type DesignConfig = {
 	term_foreground_bright: string;
 	term_margin: string;
 	term_margin_gradient: string;
+	editor_enabled: YesNo;
+	editor_highlighting: YesNo;
+	editor_validation: YesNo;
 };
 
 export const DEFAULT_DESIGN_CONFIG: DesignConfig = {
 	timeout: "5",
 	quiet: "no",
+	serial: "no",
+	serial_baudrate: "115200",
+	global_dtb: "",
+	default_entry: "1",
+	remember_last_entry: "no",
 	graphics: "yes",
 	wallpaper: [],
 	wallpaper_style: "stretched",
 	backdrop: "000000",
+	verbose: "no",
+	randomise_memory: "no",
+	hash_mismatch_panic: "yes",
+	measured_boot: "no",
+	firmware_logo: "no",
+	keyboard_layout: "",
+	mouse: "yes",
 	interface_resolution: "",
 	interface_rotation: "0",
 	interface_branding: "",
@@ -59,6 +84,9 @@ export const DEFAULT_DESIGN_CONFIG: DesignConfig = {
 	term_foreground_bright: "ffffff",
 	term_margin: "64",
 	term_margin_gradient: "32",
+	editor_enabled: "yes",
+	editor_highlighting: "yes",
+	editor_validation: "yes",
 };
 
 export function createDefaultDesignConfig(): DesignConfig {

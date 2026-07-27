@@ -39,44 +39,74 @@
 		const v = designStore.config[field.key];
 		return typeof v === "string" ? v : "";
 	}
+
+	function isFieldEnabled(field: DesignField): boolean {
+		return field.enabledWhen?.(designStore.config) ?? true;
+	}
 </script>
 
 <aside class="panel">
 	<header class="panel-header">
 		<span>Options</span>
-		<button type="button" class="reset" onclick={() => designStore.reset()}>Reset</button>
+		<div class="header-actions">
+			<button
+				type="button"
+				class="desc-toggle"
+				class:on={designStore.showDescriptions}
+				aria-pressed={designStore.showDescriptions}
+				onclick={() => (designStore.showDescriptions = !designStore.showDescriptions)}
+				title="Show or hide option descriptions"
+			>
+				<span class="switch" aria-hidden="true">
+					<span class="knob"></span>
+				</span>
+				Desc
+			</button>
+			<button type="button" class="reset" onclick={() => designStore.reset()}>Reset</button>
+		</div>
 	</header>
 
 	<div class="scroll">
 		{#each DESIGN_GROUPS as group (group.id)}
 			<Section title={group.label} collapsedByDefault={group.collapsedByDefault}>
 				{#each fieldsForGroup(group.id) as field (field.key)}
-					<Field label={field.label} help={field.help}>
+					{@const disabled = !isFieldEnabled(field)}
+					<Field
+						label={field.label}
+						description={field.description}
+						showDescription={designStore.showDescriptions}
+						{disabled}
+					>
 						{#if field.type === "yesno"}
 							<Toggle
 								value={designStore.config[field.key] as YesNo}
+								{disabled}
 								onchange={(v) => setYesNo(field.key, v)}
 							/>
 						{:else if field.type === "color"}
 							<ColorInput
 								value={renderValue(field)}
+								{disabled}
 								onchange={(v) => setString(field.key, v)}
 							/>
 						{:else if field.type === "color_alpha"}
 							<ColorInput
 								value={renderValue(field)}
 								alpha
+								{disabled}
 								onchange={(v) => setString(field.key, v)}
 							/>
 						{:else if field.type === "enum"}
 							<Select
 								value={renderValue(field)}
 								options={field.options ?? []}
+								{disabled}
 								onchange={(v) => setString(field.key, v)}
 							/>
 						{:else if field.type === "number"}
 							<NumberInput
 								value={renderValue(field)}
+								{disabled}
 								onchange={(v) => setString(field.key, v)}
 							/>
 						{:else if field.type === "path_list"}
@@ -87,11 +117,13 @@
 											value={path}
 											placeholder={field.placeholder}
 											mono
+											{disabled}
 											onchange={(v) => updateWallpaper(i, v)}
 										/>
 										<button
 											type="button"
 											class="icon-btn"
+											{disabled}
 											onclick={() => removeWallpaper(i)}
 											aria-label="Remove wallpaper"
 										>
@@ -99,7 +131,7 @@
 										</button>
 									</div>
 								{/each}
-								<button type="button" class="add" onclick={addWallpaper}>
+								<button type="button" class="add" {disabled} onclick={addWallpaper}>
 									+ Add path
 								</button>
 							</div>
@@ -110,6 +142,7 @@
 								mono={field.type === "resolution" ||
 									field.type === "palette" ||
 									field.key === "term_font"}
+								{disabled}
 								onchange={(v) => setString(field.key, v)}
 							/>
 						{/if}
@@ -143,6 +176,64 @@
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
 		flex-shrink: 0;
+	}
+
+	.header-actions {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.desc-toggle {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		padding: 2px 6px;
+		border: 1px solid var(--border-subtle);
+		border-radius: var(--radius);
+		background: var(--bg-input);
+		color: var(--text-muted);
+		font-size: 11px;
+		text-transform: none;
+		letter-spacing: 0;
+	}
+
+	.desc-toggle:hover {
+		background: var(--bg-hover);
+		color: var(--text);
+	}
+
+	.desc-toggle.on {
+		color: var(--text);
+		border-color: var(--accent);
+	}
+
+	.switch {
+		position: relative;
+		width: 22px;
+		height: 12px;
+		border-radius: 6px;
+		background: #4a4a4a;
+		flex-shrink: 0;
+	}
+
+	.desc-toggle.on .switch {
+		background: var(--bg-active);
+	}
+
+	.knob {
+		position: absolute;
+		top: 1px;
+		left: 1px;
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		background: #ddd;
+		transition: left 0.12s ease;
+	}
+
+	.desc-toggle.on .knob {
+		left: 11px;
 	}
 
 	.reset {
@@ -188,9 +279,14 @@
 		flex-shrink: 0;
 	}
 
-	.icon-btn:hover {
+	.icon-btn:hover:not(:disabled) {
 		background: var(--bg-hover);
 		color: var(--text);
+	}
+
+	.icon-btn:disabled,
+	.add:disabled {
+		cursor: not-allowed;
 	}
 
 	.add {
@@ -203,7 +299,7 @@
 		font-size: 12px;
 	}
 
-	.add:hover {
+	.add:hover:not(:disabled) {
 		border-color: var(--accent);
 		color: var(--text);
 	}

@@ -2,6 +2,7 @@ import { createDefaultDesignConfig, type DesignConfig } from "./types";
 
 class DesignStore {
 	config = $state<DesignConfig>(createDefaultDesignConfig());
+	showDescriptions = $state(true);
 
 	setField<K extends keyof DesignConfig>(key: K, value: DesignConfig[K]) {
 		this.config[key] = value;

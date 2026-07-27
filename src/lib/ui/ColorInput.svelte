@@ -8,19 +8,26 @@
 	type Props = {
 		value?: string;
 		alpha?: boolean;
+		disabled?: boolean;
 		onchange?: (value: string) => void;
 	};
 
-	let { value = "000000", alpha = false, onchange }: Props = $props();
+	let {
+		value = "000000",
+		alpha = false,
+		disabled = false,
+		onchange,
+	}: Props = $props();
 
 	let picker = $derived(toColorInputValue(value));
 	let hex = $derived(normalizeHex(value));
 </script>
 
-<div class="color">
+<div class="color" class:disabled>
 	<input
 		type="color"
 		value={picker}
+		{disabled}
 		oninput={(e) => {
 			const next = fromColorInputValue(e.currentTarget.value, value);
 			onchange?.(next);
@@ -31,6 +38,7 @@
 		type="text"
 		spellcheck="false"
 		value={hex}
+		{disabled}
 		placeholder={alpha ? "TTRRGGBB" : "RRGGBB"}
 		oninput={(e) => onchange?.(normalizeHex(e.currentTarget.value))}
 	/>

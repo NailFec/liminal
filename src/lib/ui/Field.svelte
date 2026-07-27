@@ -3,15 +3,26 @@
 
 	type Props = {
 		label: string;
-		help?: string;
+		description?: string;
+		showDescription?: boolean;
+		disabled?: boolean;
 		children: Snippet;
 	};
 
-	let { label, help, children }: Props = $props();
+	let {
+		label,
+		description,
+		showDescription = false,
+		disabled = false,
+		children,
+	}: Props = $props();
 </script>
 
-<div class="field" title={help}>
+<div class="field" class:disabled>
 	<span class="label">{label}</span>
+	{#if showDescription && description}
+		<p class="description">{description}</p>
+	{/if}
 	<div class="control">
 		{@render children()}
 	</div>
@@ -24,9 +35,21 @@
 		gap: 4px;
 	}
 
+	.field.disabled {
+		opacity: 0.45;
+		pointer-events: none;
+	}
+
 	.label {
 		font-size: 12px;
 		color: var(--text-muted);
+	}
+
+	.description {
+		margin: 0;
+		font-size: 11px;
+		line-height: 1.4;
+		color: var(--text-dim);
 	}
 
 	.control {
