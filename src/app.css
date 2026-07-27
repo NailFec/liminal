@@ -5,6 +5,8 @@
 @import "@fontsource/ibm-plex-mono/500.css";
 
 :root {
+	color-scheme: dark;
+
 	--bg-workspace: #1d1d1d;
 	--bg-panel: #303030;
 	--bg-panel-deep: #232323;

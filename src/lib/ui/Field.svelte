@@ -10,12 +10,12 @@
 	let { label, help, children }: Props = $props();
 </script>
 
-<label class="field" title={help}>
+<div class="field" title={help}>
 	<span class="label">{label}</span>
 	<div class="control">
 		{@render children()}
 	</div>
-</label>
+</div>
 
 <style>
 	.field {
