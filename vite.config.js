@@ -24,6 +24,10 @@ export default defineConfig(async () => ({
           port: 1421,
         }
       : undefined,
+    fs: {
+      // Allow importing user/limine.conf and user/* assets
+      allow: [".", "user"],
+    },
     watch: {
       // 3. tell Vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],

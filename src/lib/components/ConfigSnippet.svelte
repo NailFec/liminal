@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { serializeDesignConfig } from "$lib/limine/serialize";
-	import { designStore } from "$lib/limine/store.svelte";
+	import { serializeLimineConfig } from "$lib/limine/serialize";
+	import { liminalStore } from "$lib/limine/store.svelte";
 
 	let open = $state(false);
 	let copied = $state(false);
 
-	let snippet = $derived(serializeDesignConfig(designStore.config));
+	let snippet = $derived(
+		serializeLimineConfig(liminalStore.config, liminalStore.entries),
+	);
 
 	async function copy() {
 		try {
@@ -25,7 +27,7 @@
 	{#if open}
 		<div class="body">
 			<div class="toolbar">
-				<span>Design globals → limine.conf</span>
+				<span>limine.conf (globals + entries)</span>
 				<button type="button" class="copy" onclick={copy}>
 					{copied ? "Copied" : "Copy"}
 				</button>

@@ -1,0 +1,16 @@
+Limine-compatible CP437 bitmap fonts (8x16, 4096 bytes each).
+
+Source: https://github.com/viler-int10h/vga-text-mode-fonts
+Format: raw VGA BIOS font (256 glyphs × 16 rows × 1 byte/row)
+
+limine-default.bin  ← FONTS/PC-OTHER/TOSH-SAT.F16 (Limine built-in)
+ibm-vga8.bin        ← FONTS/PC-IBM/VGA8.F16
+ibm-iso.bin         ← FONTS/PC-IBM/ISO.F16
+ibm-ps2-thin.bin    ← FONTS/PC-IBM/PS2THIN1.F16
+fatscii.bin         ← FONTS/FATSCII.F16
+dosv-437.bin        ← FONTS/DOSV-437.F16
+unscii-16.bin       ← FONTS/UNSCII/16.F16
+ati-8x16.bin        ← FONTS/PC-OTHER/ATI8X16.F16
+
+In limine.conf use: term_font: boot():/fonts/<name>.bin
+(The project `user/` folder simulates the boot(): volume.)

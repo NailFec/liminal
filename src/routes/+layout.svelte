@@ -4,6 +4,7 @@
 	import { resolve } from "$app/paths";
 	import type { Snippet } from "svelte";
 	import WindowControls from "$lib/components/WindowControls.svelte";
+	import { liminalStore } from "$lib/limine/store.svelte";
 
 	type Props = {
 		children: Snippet;
@@ -13,6 +14,7 @@
 
 	let path = $derived(page.url.pathname);
 </script>
+
 
 <div class="app">
 	<header class="topbar">
@@ -26,6 +28,14 @@
 			>
 		</nav>
 		<div class="spacer" data-tauri-drag-region></div>
+		{#if liminalStore.importedFrom}
+			<span class="import-status" title={liminalStore.importedFrom}>
+				imported: {liminalStore.importedFrom}
+			</span>
+		{/if}
+		{#if liminalStore.importError}
+			<span class="import-error">{liminalStore.importError}</span>
+		{/if}
 		<WindowControls />
 	</header>
 	<main class="content">
@@ -87,6 +97,20 @@
 	.spacer {
 		flex: 1;
 		align-self: stretch;
+	}
+
+	.import-status {
+		font-size: 11px;
+		color: var(--text-dim);
+		max-width: 280px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.import-error {
+		font-size: 11px;
+		color: #f88;
 	}
 
 	.content {

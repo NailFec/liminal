@@ -9,6 +9,7 @@
 	import TextInput from "$lib/ui/TextInput.svelte";
 	import NumberInput from "$lib/ui/NumberInput.svelte";
 	import Select from "$lib/ui/Select.svelte";
+	import FontSelect from "$lib/ui/FontSelect.svelte";
 
 	function setString(key: keyof DesignConfig, value: string) {
 		designStore.setField(key, value as DesignConfig[typeof key]);
@@ -135,13 +136,20 @@
 									+ Add path
 								</button>
 							</div>
+						{:else if field.key === "term_font"}
+							<FontSelect
+								value={renderValue(field)}
+								{disabled}
+								onchange={(path, glyphSize) => {
+									setString("term_font", path);
+									if (path) setString("term_font_size", glyphSize);
+								}}
+							/>
 						{:else}
 							<TextInput
 								value={renderValue(field)}
 								placeholder={field.placeholder}
-								mono={field.type === "resolution" ||
-									field.type === "palette" ||
-									field.key === "term_font"}
+								mono={field.type === "resolution" || field.type === "palette"}
 								{disabled}
 								onchange={(v) => setString(field.key, v)}
 							/>

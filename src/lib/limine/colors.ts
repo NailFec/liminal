@@ -1,4 +1,4 @@
-/** Parse RRGGBB or TTRRGGBB into CSS color + opacity helpers. */
+/** Parse RRGGBB or Limine TTRRGGBB (TT = transparency) into CSS colors. */
 
 export function normalizeHex(input: string): string {
 	return input.trim().replace(/^#/, "").toLowerCase();
@@ -19,13 +19,31 @@ export function toCssColor(hex: string, fallback = "#000000"): string {
 		return `#${n}`;
 	}
 	if (/^[0-9a-f]{8}$/i.test(n)) {
-		const tt = parseInt(n.slice(0, 2), 16) / 255;
+		// Limine TTRRGGBB: TT is transparency (0x00 = opaque, 0xff = fully transparent),
+		// matching gterm colour_blend (alpha = 255 - A(fg)).
+		const transparency = parseInt(n.slice(0, 2), 16) / 255;
+		const opacity = 1 - transparency;
 		const r = n.slice(2, 4);
 		const g = n.slice(4, 6);
 		const b = n.slice(6, 8);
-		return `rgba(${parseInt(r, 16)}, ${parseInt(g, 16)}, ${parseInt(b, 16)}, ${tt.toFixed(3)})`;
+		return `rgba(${parseInt(r, 16)}, ${parseInt(g, 16)}, ${parseInt(b, 16)}, ${opacity.toFixed(3)})`;
 	}
 	return fallback;
+}
+
+/** RGB only (ignore Limine TT transparency) — used for reverse-video glyphs. */
+export function toOpaqueCssColor(hex: string, fallback = "#000000"): string {
+	const n = normalizeHex(hex);
+	if (/^[0-9a-f]{8}$/i.test(n)) return `#${n.slice(2)}`;
+	if (/^[0-9a-f]{6}$/i.test(n)) return `#${n}`;
+	return fallback;
+}
+
+/** ANSI palette colour by index (0–7). Missing slots fall back to Limine defaults. */
+export function paletteColor(palette: string, index: number, fallback: string): string {
+	const colours = parsePalette(palette);
+	const hex = colours[index];
+	return hex ? `#${hex}` : fallback;
 }
 
 /** Strip alpha for native color input (needs #RRGGBB). */

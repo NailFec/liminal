@@ -1,43 +1,62 @@
-<div class="stub">
-	<div class="card">
-		<h1>System</h1>
-		<p>
-			Manage boot menu entries, protocols, and paths here. This mode comes after Design.
-		</p>
-		<p class="hint">Coming next milestone.</p>
+<script lang="ts">
+	import EntriesPanel from "$lib/components/EntriesPanel.svelte";
+	import LiminePreview from "$lib/components/LiminePreview.svelte";
+</script>
+
+<div class="system">
+	<div class="options">
+		<EntriesPanel />
+	</div>
+	<div class="preview">
+		<header class="preview-header">Preview</header>
+		<div class="preview-body">
+			<LiminePreview />
+		</div>
 	</div>
 </div>
 
 <style>
-	.stub {
-		display: flex;
-		align-items: center;
-		justify-content: center;
+	.system {
+		display: grid;
+		grid-template-columns: 25% 75%;
 		height: 100%;
-		padding: 24px;
+		min-height: 0;
+	}
+
+	.options {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+		min-height: 0;
+		overflow: hidden;
+		border-right: 1px solid var(--border);
+	}
+
+	.preview {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+		min-height: 0;
 		background: var(--bg-workspace);
 	}
 
-	.card {
-		max-width: 420px;
-		text-align: center;
-	}
-
-	h1 {
-		margin: 0 0 8px;
-		font-size: 18px;
-		font-weight: 600;
-	}
-
-	p {
-		margin: 0;
-		color: var(--text-muted);
-		line-height: 1.5;
-	}
-
-	.hint {
-		margin-top: 16px;
+	.preview-header {
+		height: 28px;
+		padding: 0 10px;
+		display: flex;
+		align-items: center;
+		border-bottom: 1px solid var(--border);
+		background: var(--bg-panel);
 		font-size: 12px;
-		color: var(--text-dim);
+		font-weight: 500;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		flex-shrink: 0;
+	}
+
+	.preview-body {
+		flex: 1;
+		min-height: 0;
 	}
 </style>

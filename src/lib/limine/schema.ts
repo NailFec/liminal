@@ -65,7 +65,7 @@ export const DESIGN_FIELDS: DesignField[] = [
 		group: "wallpaper",
 		description:
 			"Path to a file to use as a wallpaper. BMP, PNG, JPEG, and QOI formats are supported. There can be multiple of this option, in which case the wallpaper will be randomly selected from the provided options.",
-		placeholder: "boot():/boot/wallpaper.png",
+		placeholder: "boot():/nf-wallpaper.png",
 		enabledWhen: graphicsOn,
 	},
 	{
@@ -161,7 +161,7 @@ export const DESIGN_FIELDS: DesignField[] = [
 		type: "color_alpha",
 		group: "terminal_colors",
 		description:
-			"Terminal text background colour (TTRRGGBB). TT stands for transparency.",
+			"Terminal text background colour (TTRRGGBB). TT is transparency (`00` = opaque, `ff` = fully transparent), matching Limine. Default is opaque black with no wallpaper, or translucent `80000000` when a wallpaper is set.",
 		enabledWhen: graphicsOn,
 	},
 	{
@@ -208,12 +208,12 @@ export const DESIGN_FIELDS: DesignField[] = [
 	},
 	{
 		key: "term_font",
-		label: "Font path",
+		label: "Font",
 		type: "text",
 		group: "terminal_font",
 		description:
-			"Path to a font file to be used instead of the default one for the menu and terminal. The font file must be a code page 437 character set comprised of 256 consecutive glyph bitmaps. Each glyph's bitmap must be expressed left to right (1 byte per row), and top to bottom (16 bytes per whole glyph by default; see `term_font_size`). See e.g. the [VGA text mode font](https://github.com/viler-int10h/vga-text-mode-fonts) collection for fonts.",
-		placeholder: "boot():/boot/font.bin",
+			"Path to a font file to be used instead of the default one for the menu and terminal. The font file must be a code page 437 character set comprised of 256 consecutive glyph bitmaps. Each glyph's bitmap must be expressed left to right (1 byte per row), and top to bottom (16 bytes per whole glyph by default; see `term_font_size`). Bundled fonts live under `user/fonts/` (boot volume) as `boot():/fonts/….bin`. Source: [VGA text mode fonts](https://github.com/viler-int10h/vga-text-mode-fonts).",
+		placeholder: "boot():/fonts/limine-default.bin",
 		enabledWhen: graphicsOn,
 	},
 	{
@@ -250,7 +250,8 @@ export const DESIGN_FIELDS: DesignField[] = [
 		label: "Margin",
 		type: "number",
 		group: "terminal_font",
-		description: "Set the amount of margin around the terminal.",
+		description:
+			"Set the amount of margin around the terminal. Default is 0 without wallpaper, 64 with wallpaper.",
 		enabledWhen: graphicsOn,
 	},
 	{
@@ -258,7 +259,8 @@ export const DESIGN_FIELDS: DesignField[] = [
 		label: "Margin gradient",
 		type: "number",
 		group: "terminal_font",
-		description: "Set the thickness in pixel for the gradient around the terminal.",
+		description:
+			"Set the thickness in pixels for the gradient around the terminal. Default is 0 without wallpaper, 4 with wallpaper.",
 		enabledWhen: graphicsOn,
 	},
 	{
