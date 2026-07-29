@@ -5,6 +5,8 @@
 Liminal is a cross-platform desktop GUI application for visually configuring the [Limine](https://limine-bootloader.org/) bootloader. The principle is to provide a simple configuration and real-time preview tool.  
 The current focus is the **Design** mode (real-time preview of global appearance, with tools to import popular themes from the Internet, select colors and wallpapers, and download the fonts that are allowed). The **System** mode (manage boot menu entries) is planned for a later milestone.
 
+![intro_image.png](intro_image.png)
+
 ## For Users
 
 ### Features
