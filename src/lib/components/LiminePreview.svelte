@@ -16,9 +16,12 @@
 	import { getEffectiveTermChrome, hasWallpaper } from "$lib/limine/termChrome";
 	import { resolveWallpaperUrl } from "$lib/limine/userAssets";
 
-	const TREE_WINDOW = 12;
-
 	let quietDismissedEpoch = $state(-1);
+	let screenWidth = $state(0);
+	let screenHeight = $state(0);
+	let termWidth = $state(0);
+	let termHeight = $state(0);
+	let treeOffset = $state(0);
 
 	let cfg = $derived(liminalStore.config);
 	let preview = $derived(liminalStore.preview);
@@ -43,21 +46,48 @@
 	let revFg = $derived(toOpaqueCssColor(chrome.term_background, "#000000"));
 	let margin = $derived(chrome.term_margin);
 	let gradient = $derived(chrome.term_margin_gradient);
-	let outerPad = $derived(Math.max(0, margin - gradient));
 
 	let commentColour = $derived(paletteColor(cfg.term_palette, 6, "#00aaaa"));
 
-	let spacing = $derived(Math.max(0, Number(cfg.term_font_spacing) || 1));
+	let previewScale = $derived(
+		resolution && screenWidth > 0 && screenHeight > 0
+			? Math.min(screenWidth / resolution.width, screenHeight / resolution.height)
+			: 1,
+	);
+	let outerPad = $derived(Math.max(0, margin - gradient) * previewScale);
+	let displayGradient = $derived(gradient * previewScale);
+
+	let spacing = $derived.by(() => {
+		const value = Number(cfg.term_font_spacing);
+		return Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 1;
+	});
 	let scaleParts = $derived(cfg.term_font_scale.match(/^(\d+)x(\d+)$/i));
-	let scaleX = $derived(scaleParts ? Math.min(8, Number(scaleParts[1]) || 1) : 1);
-	let scaleY = $derived(scaleParts ? Math.min(8, Number(scaleParts[2]) || 1) : 1);
+	let scaleIsValid = $derived(
+		scaleParts !== null &&
+			Number(scaleParts[1]) >= 1 &&
+			Number(scaleParts[1]) <= 8 &&
+			Number(scaleParts[2]) >= 1 &&
+			Number(scaleParts[2]) <= 8,
+	);
+	let scaleX = $derived(scaleIsValid && scaleParts ? Number(scaleParts[1]) : 1);
+	let scaleY = $derived(scaleIsValid && scaleParts ? Number(scaleParts[2]) : 1);
 	let fontSizeParts = $derived(cfg.term_font_size.match(/^(\d+)x(\d+)$/i));
-	let glyphH = $derived(fontSizeParts ? Math.max(1, Number(fontSizeParts[2]) || 16) : 16);
-	let fontSize = $derived(Math.round(glyphH * scaleY));
-	let letterSpacing = $derived(spacing * scaleX + Math.max(0, scaleX - 1) * 8 * scaleY);
 
 	let bundledFont = $derived(resolveBundledFont(cfg.term_font));
 	let previewFontFamily = $derived(bundledFont.previewFamily);
+	let customFontLoaded = $derived(cfg.term_font.trim() !== "" && bundledFont.id !== "");
+	let glyphH = $derived(
+		customFontLoaded && fontSizeParts?.[1] === "8"
+			? Math.max(1, Number(fontSizeParts[2]) || 16)
+			: 16,
+	);
+	let rawFontSize = $derived(glyphH * scaleY);
+	let fontSize = $derived(Math.max(1, rawFontSize * previewScale));
+	let letterSpacing = $derived(
+		((8 + spacing) * scaleX - rawFontSize / 2) * previewScale,
+	);
+	let cellWidth = $derived(Math.max(1, (8 + spacing) * scaleX * previewScale));
+	let actionGapExtra = $derived(letterSpacing * 4);
 
 	$effect(() => {
 		void ensurePreviewFontLoaded(bundledFont);
@@ -96,8 +126,28 @@
 	let brandingText = $derived(
 		cfg.interface_branding.trim() || synthesizeBranding(preview),
 	);
+	let headerOffset = $derived((brandingText ? 2 : 0) + (hasSecondaryHelp ? 2 : 0));
 
 	let flatRows = $derived(flattenVisibleEntries(entries, preview));
+	let terminalRows = $derived(
+		termHeight > 0 && fontSize > 0 ? Math.max(1, Math.floor(termHeight / fontSize)) : 24,
+	);
+	let terminalCols = $derived(
+		termWidth > 0 && cellWidth > 0 ? Math.max(1, Math.floor(termWidth / cellWidth)) : 80,
+	);
+	let treeWindow = $derived(Math.max(1, terminalRows - 8 - headerOffset));
+	let treeColumns = $derived.by(() => {
+		const widest =
+			flatRows.length > 0
+				? flatRows.reduce(
+						(max, row) =>
+							Math.max(max, treePrefix(row).length + row.entry.name.length + 2),
+						0,
+					)
+				: "[config file contains no valid entries]".length;
+		return Math.min(widest, Math.max(1, terminalCols - 2));
+	});
+	let treeWidth = $derived(treeColumns * cellWidth);
 
 	let selectedIndex = $derived.by(() => {
 		const id = liminalStore.selectedEntryId;
@@ -110,18 +160,31 @@
 
 	let selectedRow = $derived(selectedIndex >= 0 ? flatRows[selectedIndex] : null);
 
-	let treeOffset = $derived.by(() => {
-		if (selectedIndex < 0) return 0;
-		const maxOff = Math.max(0, flatRows.length - TREE_WINDOW);
-		return Math.min(maxOff, Math.max(0, selectedIndex - Math.floor(TREE_WINDOW / 2)));
+	let maxTreeOffset = $derived(Math.max(0, flatRows.length - treeWindow));
+	let visibleTreeOffset = $derived.by(() => {
+		let nextOffset = Math.min(treeOffset, maxTreeOffset);
+		if (selectedIndex < 0) {
+			nextOffset = 0;
+		} else if (selectedIndex < nextOffset) {
+			nextOffset = selectedIndex;
+		} else if (selectedIndex >= nextOffset + treeWindow) {
+			nextOffset = selectedIndex - treeWindow + 1;
+		}
+		return nextOffset;
 	});
 
 	let windowRows = $derived(
-		flatRows.slice(treeOffset, treeOffset + TREE_WINDOW) as FlatMenuRow[],
+		flatRows.slice(visibleTreeOffset, visibleTreeOffset + treeWindow) as FlatMenuRow[],
 	);
 
-	let canScrollUp = $derived(treeOffset > 0);
-	let canScrollDown = $derived(treeOffset + TREE_WINDOW < flatRows.length);
+	let canScrollUp = $derived(visibleTreeOffset > 0);
+	let canScrollDown = $derived(visibleTreeOffset + treeWindow < flatRows.length);
+	let treeHeight = $derived(Math.max(1, windowRows.length));
+	let treeStartRow = $derived(
+		Math.max(Math.floor((terminalRows - treeHeight) / 2), 4 + headerOffset),
+	);
+	let scrollUpRow = $derived(3 + headerOffset);
+	let scrollDownRow = $derived(Math.max(0, terminalRows - 4));
 
 	$effect(() => {
 		if (flatRows.length === 0) {
@@ -135,8 +198,18 @@
 	});
 
 	function selectIndex(index: number) {
-		if (index < 0 || index >= flatRows.length) return;
-		liminalStore.setSelectedEntryId(flatRows[index].entry.id);
+		if (flatRows.length === 0) return;
+		const wrappedIndex = (index + flatRows.length) % flatRows.length;
+		revealIndex(wrappedIndex);
+		liminalStore.setSelectedEntryId(flatRows[wrappedIndex].entry.id);
+	}
+
+	function revealIndex(index: number) {
+		if (index < treeOffset) {
+			treeOffset = index;
+		} else if (index >= treeOffset + treeWindow) {
+			treeOffset = Math.min(maxTreeOffset, index - treeWindow + 1);
+		}
 	}
 
 	function treePrefix(row: FlatMenuRow): string {
@@ -166,6 +239,7 @@
 	}
 
 	function onEntryActivate(row: FlatMenuRow) {
+		revealIndex(flatRows.findIndex((item) => item.entry.id === row.entry.id));
 		liminalStore.setSelectedEntryId(row.entry.id);
 		if (isDirectory(row.entry)) {
 			liminalStore.toggleExpanded(row.entry.id);
@@ -212,6 +286,8 @@
 			role="application"
 			aria-label="Limine boot menu preview"
 			tabindex="0"
+			bind:clientWidth={screenWidth}
+			bind:clientHeight={screenHeight}
 			style:background-color={!graphics ? "#000" : backdrop}
 			style:background-image={wallpaperBgImage}
 			style:background-size={wallpaperBgSize}
@@ -227,54 +303,60 @@
 					class="term-frame"
 					style:padding="{outerPad}px"
 					style:--term-bg={termBg}
-					style:--grad="{gradient}px"
+					style:--grad="{displayGradient}px"
 				>
 					<div
 						class="term-fade"
-						class:has-fade={gradient > 0}
-						style:padding="{gradient}px"
+						class:has-fade={displayGradient > 0}
+						style:padding="{displayGradient}px"
 					>
 						<div
 							class="term"
+							bind:clientWidth={termWidth}
+							bind:clientHeight={termHeight}
 							style:background={termBg}
 							style:color={termFg}
 							style:font-family="{previewFontFamily}, monospace"
 							style:font-size="{fontSize}px"
 							style:letter-spacing="{letterSpacing}px"
+							style:--action-gap-extra="{actionGapExtra}px"
 						>
-							<div class="spacer-lines" aria-hidden="true"></div>
-
-							{#if brandingText}
-								<div class="branding" style:color={brandingColour}>{brandingText}</div>
+							<div class="header">
 								<div class="spacer-lines" aria-hidden="true"></div>
-							{/if}
 
-							{#if !helpHidden}
-								{@render helpPrimary()}
-								{#if hasSecondaryHelp}
+								{#if brandingText}
+									<div class="branding" style:color={brandingColour}>{brandingText}</div>
 									<div class="spacer-lines" aria-hidden="true"></div>
-									<div class="help-row secondary">
-										{#if isUefi}
-											<span class="help-key" style:color={helpColour}>S</span>
-											<span> Firmware Setup</span>
-											{#if editorEnabled}
-												<span class="gap"></span>
-											{/if}
-										{/if}
-										{#if editorEnabled}
-											<span class="help-key" style:color={helpColour}>B</span>
-											<span> Blank Entry</span>
-										{/if}
-									</div>
 								{/if}
-							{/if}
+
+								{#if !helpHidden}
+									{@render helpPrimary()}
+									{#if hasSecondaryHelp}
+										<div class="spacer-lines" aria-hidden="true"></div>
+										<div class="help-row secondary">
+											{#if isUefi}
+												<span class="help-action">
+													<span class="help-key" style:color={helpColour}>S</span> Firmware Setup
+												</span>
+											{/if}
+											{#if editorEnabled}
+												<span class="help-action">
+													<span class="help-key" style:color={helpColour}>B</span> Blank Entry
+												</span>
+											{/if}
+										</div>
+									{/if}
+								{/if}
+							</div>
 
 							{#if canScrollUp}
-								<div class="scroll-cue">{useAscii ? "^^^" : "↑↑↑"}</div>
+								<div class="scroll-cue" style:top="{scrollUpRow}em">
+									{useAscii ? "^^^" : "↑↑↑"}
+								</div>
 							{/if}
 
-							<div class="tree">
-								<div class="tree-block">
+							<div class="tree" style:top="{treeStartRow}em">
+								<div class="tree-block" style:width="{treeWidth}px">
 									{#if flatRows.length === 0}
 										<div class="empty">[config file contains no valid entries]</div>
 									{:else}
@@ -297,7 +379,9 @@
 							</div>
 
 							{#if canScrollDown}
-								<div class="scroll-cue">{useAscii ? "vvv" : "↓↓↓"}</div>
+								<div class="scroll-cue" style:top="{scrollDownRow}em">
+									{useAscii ? "vvv" : "↓↓↓"}
+								</div>
 							{/if}
 
 							<div class="footer">
@@ -319,21 +403,24 @@
 	{#if selectedRow}
 		<div class="help-row primary">
 			{#if isDirectory(selectedRow.entry)}
-				<span class="help-key" style:color={helpColour}>ARROWS</span>
-				<span> Select</span>
-				<span class="gap"></span>
-				<span class="help-key" style:color={helpColour}>ENTER</span>
-				<span> {selectedRow.entry.expanded ? "Collapse" : "Expand"}</span>
+				<span class="help-action">
+					<span class="help-key" style:color={helpColour}>ARROWS</span> Select
+				</span>
+				<span class="help-action">
+					<span class="help-key" style:color={helpColour}>ENTER</span>
+					{selectedRow.entry.expanded ? "Collapse" : "Expand"}
+				</span>
 			{:else}
-				<span class="help-key" style:color={helpColour}>ARROWS</span>
-				<span> Select</span>
-				<span class="gap"></span>
-				<span class="help-key" style:color={helpColour}>ENTER</span>
-				<span> Boot</span>
+				<span class="help-action">
+					<span class="help-key" style:color={helpColour}>ARROWS</span> Select
+				</span>
+				<span class="help-action">
+					<span class="help-key" style:color={helpColour}>ENTER</span> Boot
+				</span>
 				{#if editorEnabled}
-					<span class="gap"></span>
-					<span class="help-key" style:color={helpColour}>E</span>
-					<span> Edit</span>
+					<span class="help-action">
+						<span class="help-key" style:color={helpColour}>E</span> Edit
+					</span>
 				{/if}
 			{/if}
 		</div>
@@ -432,43 +519,43 @@
 	}
 
 	.term {
-		display: flex;
-		flex-direction: column;
+		position: relative;
 		flex: 1;
 		min-height: 0;
 		padding: 0;
-		padding-bottom: 1em;
 		line-height: 1;
 		overflow: hidden;
 		font-family: inherit;
 	}
 
+	.header {
+		position: absolute;
+		inset: 0 0 auto;
+	}
+
 	.branding {
 		text-align: center;
 		font-weight: 400;
-		flex-shrink: 0;
 	}
 
 	.spacer-lines {
 		white-space: pre;
 		line-height: 1;
 		height: 1em;
-		flex-shrink: 0;
 	}
 
 	.help-row {
 		display: flex;
 		justify-content: center;
-		flex-wrap: wrap;
+		flex-wrap: nowrap;
 		align-items: baseline;
-		gap: 0;
-		flex-shrink: 0;
 		margin-bottom: 0;
 		color: inherit;
+		white-space: nowrap;
 	}
 
-	.help-row .gap {
-		width: 4ch;
+	.help-action + .help-action {
+		margin-left: calc(4ch + var(--action-gap-extra));
 	}
 
 	.help-key {
@@ -476,18 +563,21 @@
 	}
 
 	.scroll-cue {
+		position: absolute;
+		right: 0;
+		left: 0;
+		height: 1em;
 		text-align: center;
-		flex-shrink: 0;
 		opacity: 0.85;
 	}
 
 	.tree {
-		flex: 1;
+		position: absolute;
+		right: 0;
+		left: 0;
 		display: flex;
-		flex-direction: column;
-		justify-content: center;
 		align-items: center;
-		min-height: 0;
+		justify-content: center;
 		overflow: hidden;
 		padding: 0;
 	}
@@ -530,18 +620,25 @@
 	}
 
 	.entry .name {
+		min-width: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
 
 	.footer {
-		flex-shrink: 0;
-		margin-top: auto;
-		padding-top: 0;
+		position: absolute;
+		right: 0;
+		bottom: 1em;
+		left: 0;
+		height: 1em;
 		text-align: center;
 	}
 
 	.comment {
 		margin: 0;
+		padding: 0 1em;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 </style>
